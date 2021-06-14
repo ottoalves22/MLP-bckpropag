@@ -2,70 +2,109 @@ import numpy as np
 import pandas as pd
 
 
-def sigmoide(x):
-    return 1 / (1 + np.exp(-x))  # f(x) = 1/1+e^-x
+class MLP:
+    def __init__(self, entrada=63, escondida=[1], saida=7):
+        self.entradas = entrada
+        self.escondida = escondida
+        self.saida = saida
+
+        camadas = [self.entradas] + self.escondida + [self.saida]
+
+        pesos = []
+        for i in range(len(camadas) - 1):
+            w = np.random.rand(camadas[i], camadas[i + 1])  # Gerando a matriz de pesos
+            pesos.append(w)
+        self.pesos = pesos
+
+        ativacoes = []
+        for i in range(len(camadas)):
+            temp = np.zeros(camadas[i])  # Return a list of 0 (0, 0, 0, 0)
+            ativacoes.append(temp)
+        self.ativacoes = ativacoes
+
+        derivadas = []
+        for i in range(len(camadas) - 1):
+            aux = np.zeros((camadas[i], camadas[i + 1]))
+            derivadas.append(aux)
+        self.derivadas = derivadas
+
+    def sigmoide(self, t):
+        return 1 / (1 + np.exp(-t))
+
+    def sigmoide_derivada(self, t):
+        return t * (1.0 - t)
+
+    def feed_foward(self, entradas):
+        ativacao = entradas
+        self.ativacoes[0] = entradas
+
+        for i, w in enumerate(self.pesos):
+            temp = np.dot(ativacao, w)
+            ativacao = self.sigmoide(temp)
+            self.ativacoes[i + 1] = ativacao
+
+        return ativacao
+
+    def back_propagation(self, erro, v=False):
+        for i in reversed(range(len(self.derivadas))):
+            ativacoes = self.ativacoes[i + 1]
+            delta = erro * self.sigmoide_derivada(ativacoes)
+            delta_transformada = delta.reshape(delta.shape[0], -1).T
+
+            ativacao = self.ativacoes[i]
+            ativacao = ativacao.reshape(ativacao.shape[0], -1)
+
+            self.derivadas[i] = np.dot(ativacao, delta_transformada)
+
+            erro = np.dot(delta, self.pesos[i].T)
+
+            if v:
+                print(f'Derivadas para {i}: {self.derivadas[i]}')
+
+    def gradiente_descendente(self, taxa_erro):
+        for i in range(len(self.pesos)):
+            pesos = self.pesos[i]
+            # print(f'Original w{i} {pesos}')
+
+            derivadas = self.derivadas[i]
+
+            pesos += derivadas * taxa_erro
+            # print(f'Atualizado w{i} {pesos}')
+
+    def eqm(self, target, saida):
+        return np.average((target - saida) ** 2)
+
+    def treinamento(self, entradas, targets, epocas, taxa_erro):
+        for epoca in range(epocas):
+            somatorio_erros = 0
+            for entrada, target in zip(entradas, targets):
+                saida = self.feed_foward(entrada)
+
+                erro = target - saida
+
+                self.back_propagation(erro, v=False)
+
+                self.gradiente_descendente(taxa_erro)
+
+                somatorio_erros += self.eqm(target, saida)
+
+            print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
 
 
-# essa merda servira pra checar o erro da predicao do sigmoide
-def sigmoide_derivada(sx):
-    # derivacao aqui https://math.stackexchange.com/a/1225116
-    return sx * (1 - sx)  # f'(x) = f(x) . (1-f(x))
+def separa_colunas(entrada: pd.DataFrame, saida: list):
+    for i in range(6):
+        aux = []
+        for j in range(7):
+            print(str(j) + " " + str(i))
+            print(entrada[j][i])
+            print("\n")
+            aux.append(entrada[j][i])
+            saida.append(aux)
 
 
-def custo(predizido, verdadeiro):
-    return verdadeiro - predizido
-
-
-# cria um dataframe com os valores do csv:
-entrada = pd.read_csv('./problemXOR.csv', header=None, names=['e1', 'e2', 's'])
-
-# cria vetor de entrada:
-X = np.array([
-    [entrada['e1'][0], entrada['e2'][0]],
-    [entrada['e1'][1], entrada['e2'][1]],
-    [entrada['e1'][2], entrada['e2'][2]],
-    [entrada['e1'][3], entrada['e2'][3]]
-])
-
-Y = np.array([
-    entrada['s'][0],
-    entrada['s'][1],
-    entrada['s'][2],
-    entrada['s'][3]
-]).T
-
-# define o formato dos vetor de peso
-dados_pesos, camada_input = X.shape
-
-camada_escondida = 1
-
-# inicializar os pesos entre o input e a camada escondida com valores aleatorios
-P1 = np.random.random((camada_input, camada_escondida))
-
-camada_saida = len(Y.T)
-
-# inicializar os pesos entre a escondida e a camada de saida com valores aleatorios
-P2 = np.random.random((camada_escondida, camada_saida))
-
-num_epocas = 1000
-
-# taxa de aprendizado
-alfa = 1.0
-
-for epoca in range(num_epocas):
-    camada0 = X
-    # foward propagation, daqui pra baixo os pesos vao do inicio pra saida
-
-    # dentro do perceprola passo2
-    camada1 = sigmoide(np.dot(camada0, P1))
-    camada2 = sigmoide(np.dot(camada1, P2))
-
-    # back propagation, daqui pra baixo os pesos vao do fim pro inicio
-
-    # taxa de erro das predicoes, a diferença entre os resultados em camada2 para os valores corredos em Y_and
-    # camada2_erro = custo(camada2, Y)
-
-for x, y in zip(X, Y):
-    layer1_prediction = sigmoide(np.dot(P1.T, x))  # Feed the unseen input into trained W.
-    prediction = layer2_prediction = sigmoide(np.dot(P2.T, layer1_prediction))  # Feed the unseen input into trained W.
-    print((prediction > 0.5), y)
+if __name__ == '__main__':
+    data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(63)])
+    saida = []
+    separa_colunas(data_input, saida)
+    for i in range(7):
+        print(saida[i])
