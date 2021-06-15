@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.ma import count
 import pandas as pd
 
 
@@ -91,20 +92,16 @@ class MLP:
             print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
 
 
-def separa_colunas(entrada: pd.DataFrame, saida: list):
-    for i in range(6):
+def separa_colunas(entrada: pd.DataFrame, x):
+    for i in range(x):
         aux = []
-        for j in range(7):
-            print(str(j) + " " + str(i))
-            print(entrada[j][i])
-            print("\n")
-            aux.append(entrada[j][i])
-            saida.append(aux)
+        for j in range(63):
+            aux.append(entrada[j][i]) # monta linha de leitura
+            arr = np.array(aux) # transforma em array
+        print(arr.reshape(9,7)) #transforma em matrix letra
+        print("\n")
 
 
 if __name__ == '__main__':
     data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(63)])
-    saida = []
-    separa_colunas(data_input, saida)
-    for i in range(7):
-        print(saida[i])
+    separa_colunas(data_input, 5) # numero de linhas a serem lidas
