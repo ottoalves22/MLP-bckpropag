@@ -92,16 +92,23 @@ class MLP:
             print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
 
 
-def separa_colunas(entrada: pd.DataFrame, x):
+def separa_colunas(entrada: pd.DataFrame, x, y, target):
     for i in range(x):
-        aux = []
-        for j in range(63):
-            aux.append(entrada[j][i]) # monta linha de leitura
-            arr = np.array(aux) # transforma em array
+        aux1 = []
+        aux2 = []
+        for j in range(y):
+            if j<63: 
+                aux1.append(entrada[j][i]) # monta aux 1 da lista da letra
+            else:
+                aux2.append(entrada[j][i]) # monta aux 2 da lista de label
+        arr = np.array(aux1) # transforma em array
+        target = aux2
+        print("\n")
         print(arr.reshape(9,7)) #transforma em matrix letra
         print("\n")
-
+        print(target)
 
 if __name__ == '__main__':
-    data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(63)])
-    separa_colunas(data_input, 5) # numero de linhas a serem lidas
+    data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(70)])
+    target = []
+    separa_colunas(data_input, 3, 70, target) # x numero de linhas  y num colunas
