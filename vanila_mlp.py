@@ -76,10 +76,11 @@ class MLP:
         return np.average((target - saida) ** 2)
 
     def treinamento(self, entradas, targets, epocas, taxa_erro):
+        saida = None
         for epoca in range(epocas):
             somatorio_erros = 0
             for entrada, target in zip(entradas, targets):
-                saida = self.feed_foward(entrada)
+                saida = self.feed_foward(entrada / np.linalg.norm(entrada))
 
                 erro = target - saida
 
@@ -88,27 +89,59 @@ class MLP:
                 self.gradiente_descendente(taxa_erro)
 
                 somatorio_erros += self.eqm(target, saida)
+            # print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
 
-            print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
+    def predizer(self, X_teste):
+        return self.feed_foward(X_teste)
 
 
-def separa_colunas(entrada: pd.DataFrame, x, y, target):
-    for i in range(x):
+def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
+    target = []
+    saida = []
+    tgt = None
+    arr = None
+    for i in range(linhas):
         aux1 = []
         aux2 = []
-        for j in range(y):
-            if j<63: 
-                aux1.append(entrada[j][i]) # monta aux 1 da lista da letra
+        for j in range(colunas):
+            if j < 63:
+                aux1.append(entrada[j][i])  # monta aux 1 da lista da letra
             else:
-                aux2.append(entrada[j][i]) # monta aux 2 da lista de label
-        arr = np.array(aux1) # transforma em array
-        target = aux2
-        print("\n")
-        print(arr.reshape(9,7)) #transforma em matrix letra
-        print("\n")
-        print(target)
+                aux2.append(entrada[j][i])  # monta aux 2 da lista de label
+        arr = np.array(aux1)
+        arr = arr.tolist()
+        tgt = aux2
+
+        saida.append(arr)
+        target.append(tgt)
+
+    return saida, target
+
 
 if __name__ == '__main__':
+    """------ TREINAMENTO ------"""
     data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(70)])
-    target = []
-    separa_colunas(data_input, 3, 70, target) # x numero de linhas  y num colunas
+    linhas_treinamento = 14 # 21 caracteres-limpo originalmente tinha 21 linhas, cortei algumas fora pra fazer o csv de predicao
+    colunas = 70
+    X, labels = separa_colunas(data_input, linhas_treinamento, colunas)  # x numero de linhas  y num colunas
+    entradas = np.array(X)
+    targets = np.array(labels)
+
+    mlp = MLP()
+
+    epocas = 1000
+    alfa = 0.1
+    mlp.treinamento(entradas, targets, epocas, alfa)
+
+    """------ EXECUCAO ------"""
+
+    entrada_execucao = pd.read_csv('caraceteres_teste_otto.csv', header=None, usecols=[i for i in range(70)])
+    linhas_execucao = 7
+    X_teste, labels_teste = separa_colunas(entrada_execucao, linhas_execucao, colunas)
+    entradas = np.array(X_teste)
+
+    resultados = mlp.predizer(entradas) # aqui entrariam os caracteres sujos
+    print("Resultados da predição:")
+    for i in range(linhas_execucao):
+        print(f"{resultados[i]}\n\n")
+
