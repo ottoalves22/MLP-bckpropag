@@ -69,7 +69,9 @@ class MLP:
 
             derivadas = self.derivadas[i]
 
+            # TODO:  isso nao parece certo, deveria ser self.pesos?
             pesos += derivadas * taxa_erro
+            logger(f'Atualizando w{i} {pesos}\n', "pesos_grad_desc.txt")
             # print(f'Atualizado w{i} {pesos}')
 
     def eqm(self, target, saida):
@@ -89,10 +91,20 @@ class MLP:
                 self.gradiente_descendente(taxa_erro)
 
                 somatorio_erros += self.eqm(target, saida)
-            # print(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca}')
+            logger(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca} \n', "erro_epoca.txt")
 
-    def predizer(self, X_teste):
-        return self.feed_foward(X_teste)
+    def predizer(self, x_teste, base):
+        resultado = self.feed_foward(x_teste)
+
+        # TODO: ta logando, preciso encapsular depois
+        aux = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        logger(f"Predições no CSV {base}:\n", "resultado.txt")
+        for i in range(linhas_execucao):
+            for j in range(7):
+                logger(f"\n{resultado[i][j]} {aux[j]} \n", "resultado.txt")
+            logger(f"------------------------------------", "resultado.txt")
+
+        return resultado
 
 
 def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
@@ -118,6 +130,20 @@ def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
     return saida, target
 
 
+"""
+Arquivos possíveis: 
+    pesos_iniciais.txt
+    pesos_finais.txt
+    erro_epoca.txt
+"""
+
+
+def logger(mensagem, arquivo):
+    file = open(arquivo, "a")
+    file.write(mensagem)
+    file.close()
+
+
 if __name__ == '__main__':
     """------ TREINAMENTO ------"""
     data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(70)])
@@ -135,13 +161,12 @@ if __name__ == '__main__':
 
     """------ EXECUCAO ------"""
 
-    entrada_execucao = pd.read_csv('caraceteres_teste_otto.csv', header=None, usecols=[i for i in range(70)])
+    nome_csv = 'caraceteres_teste_otto.csv'
+    entrada_execucao = pd.read_csv(nome_csv, header=None, usecols=[i for i in range(70)])
     linhas_execucao = 7
     X_teste, labels_teste = separa_colunas(entrada_execucao, linhas_execucao, colunas)
     entradas = np.array(X_teste)
 
-    resultados = mlp.predizer(entradas) # aqui entrariam os caracteres sujos
-    print("Resultados da predição:")
-    for i in range(linhas_execucao):
-        print(f"{resultados[i]}\n\n")
+    resultados = mlp.predizer(entradas, nome_csv) # aqui entrariam os caracteres sujos
+
 
