@@ -1,10 +1,11 @@
 import numpy as np
-from numpy.ma import count
 import pandas as pd
 
 
 class MLP:
     def __init__(self, entrada=63, escondida=[1], saida=7):
+        logger(f'Neuronios de entrada: {entrada}, camadas escondidas: {escondida}, neuronios de saida: {saida}, ',
+               'parametros_iniciais.txt')
         self.entradas = entrada
         self.escondida = escondida
         self.saida = saida
@@ -16,6 +17,7 @@ class MLP:
             w = np.random.rand(camadas[i], camadas[i + 1])  # Gerando a matriz de pesos
             pesos.append(w)
         self.pesos = pesos
+        logger(f'Pesos inciais:\n {pesos}', 'pesos_iniciais.txt')
 
         ativacoes = []
         for i in range(len(camadas)):
@@ -69,7 +71,6 @@ class MLP:
 
             derivadas = self.derivadas[i]
 
-            # TODO:  isso nao parece certo, deveria ser self.pesos?
             pesos += derivadas * taxa_erro
             logger(f'Atualizando w{i} {pesos}\n', "pesos_grad_desc.txt")
             # print(f'Atualizado w{i} {pesos}')
@@ -80,6 +81,7 @@ class MLP:
     def treinamento(self, entradas, targets, epocas, taxa_erro):
         saida = None
         for epoca in range(epocas):
+            print(epoca)
             somatorio_erros = 0
             for entrada, target in zip(entradas, targets):
                 saida = self.feed_foward(entrada / np.linalg.norm(entrada))
@@ -92,19 +94,28 @@ class MLP:
 
                 somatorio_erros += self.eqm(target, saida)
             logger(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca} \n', "erro_epoca.txt")
+        logger(f'Pesos finais:\n {self.pesos} \n', 'pesos_finais.txt')
 
     def predizer(self, x_teste, base):
         resultado = self.feed_foward(x_teste)
 
-        # TODO: ta logando, preciso encapsular depois
-        aux = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-        logger(f"Predições no CSV {base}:\n", "resultado.txt")
-        for i in range(linhas_execucao):
-            for j in range(7):
-                logger(f"\n{resultado[i][j]} {aux[j]} \n", "resultado.txt")
-            logger(f"------------------------------------", "resultado.txt")
+        logger_predicao(resultado, base)  # logando certinho os resultados
 
         return resultado
+
+
+def precisao(resultado, y_teste):
+    for y in range(len(resultado)):
+        if np.array_equal(resultado[y], y_teste[y]):
+            resultado += 1
+    accuracy = resultado / y_teste.shape[0]
+
+    logger(f'\n Precisão:\n', 'resultado.txt')
+    for i in accuracy:
+        for j in i:
+            logger(f'{j} ', 'resultado.txt')
+        logger(f'\n------------------------------\n', 'resultado.txt')
+    return accuracy
 
 
 def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
@@ -144,10 +155,19 @@ def logger(mensagem, arquivo):
     file.close()
 
 
+def logger_predicao(resultado, base):
+    aux = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    logger(f"Predições no CSV {base}:\n", "resultado.txt")
+    for i in range(linhas_execucao):
+        for j in range(7):
+            logger(f"\n{resultado[i][j]} {aux[j]} \n", "resultado.txt")
+        logger(f"------------------------------------", "resultado.txt")
+
+
 if __name__ == '__main__':
     """------ TREINAMENTO ------"""
     data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(70)])
-    linhas_treinamento = 14 # 21 caracteres-limpo originalmente tinha 21 linhas, cortei algumas fora pra fazer o csv de predicao
+    linhas_treinamento = 21  # 21 caracteres-limpo originalmente tinha 21 linhas, cortei algumas fora pra fazer o csv de predicao
     colunas = 70
     X, labels = separa_colunas(data_input, linhas_treinamento, colunas)  # x numero de linhas  y num colunas
     entradas = np.array(X)
@@ -155,18 +175,18 @@ if __name__ == '__main__':
 
     mlp = MLP()
 
-    epocas = 1000
-    alfa = 0.1
+    epocas = 54000
+    alfa = 1
+    logger(f'Épocas: {epocas}, taxa de aprendizado: {alfa} ', 'parametros_iniciais.txt')
     mlp.treinamento(entradas, targets, epocas, alfa)
 
     """------ EXECUCAO ------"""
 
-    nome_csv = 'caraceteres_teste_otto.csv'
+    nome_csv = 'caracteres-ruido.csv'
     entrada_execucao = pd.read_csv(nome_csv, header=None, usecols=[i for i in range(70)])
-    linhas_execucao = 7
+    linhas_execucao = 21
     X_teste, labels_teste = separa_colunas(entrada_execucao, linhas_execucao, colunas)
     entradas = np.array(X_teste)
 
-    resultados = mlp.predizer(entradas, nome_csv) # aqui entrariam os caracteres sujos
-
-
+    resultados = mlp.predizer(entradas, nome_csv)  # aqui entrariam os caracteres sujos
+    resultado_precisao = precisao(resultados, np.array(labels_teste))
