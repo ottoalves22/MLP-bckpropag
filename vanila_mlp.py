@@ -118,6 +118,56 @@ def precisao(resultado, y_teste):
     return accuracy
 
 
+def matriz_confusao(preditos, target):
+    # valores preditos corretamente
+    tp = 0
+    tn = 0
+
+    # valores preditos incorretamente
+    fp = 0
+    fn = 0
+
+    linha = 0
+
+    while (linha < len(preditos)):  # incrementando a cada linha
+
+        coluna = 0
+
+        while (coluna < len(preditos[linha])):  # incrementando a cada coluna
+            v_predito = preditos[linha][coluna]  # valor predito em cada neuronio de saida
+            v_target = target[linha][coluna]  # valor com target para cada neuronio (0 ou 1)
+
+            if v_predito == max(preditos[linha]):  # se o valor predito foi o maior (ou seja, a classificacao final)
+                if v_target == 1:
+                    tp += 1  # true positive recebe +1 caso o target também seja 1
+                else:
+                    fp += 1  # se target é 0, é false positive
+            else:
+                if v_target == 0:
+                    tn += 1  # true negative recebe +1 caso o target também seja 0
+                else:
+                    fn += 1  # se target é 1, é false negative
+            coluna += 1
+
+        matriz_conf = np.array([
+            [tp, fp],  # valores da classe positiva
+            [fn, tn]  # valores da classe negativa
+        ])
+
+        logger(f'Matriz de Confusão: \n{matriz_conf}\n', 'resultado.txt')
+        logger(f'Target: {target[linha]}\n Resposta da MLP: {preditos[linha]}', 'resultado.txt')
+        logger(f'\n------------------------------\n', 'resultado.txt')
+
+        # zera valores para criar uma matriz a cada linha
+
+        tp = 0
+        tn = 0
+        fp = 0
+        fn = 0
+
+        linha += 1
+
+
 def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
     target = []
     saida = []
@@ -175,8 +225,8 @@ if __name__ == '__main__':
 
     mlp = MLP()
 
-    epocas = 54000
-    alfa = 1
+    epocas = 1000
+    alfa = 0.35
     logger(f'Épocas: {epocas}, taxa de aprendizado: {alfa} ', 'parametros_iniciais.txt')
     mlp.treinamento(entradas, targets, epocas, alfa)
 
@@ -190,3 +240,4 @@ if __name__ == '__main__':
 
     resultados = mlp.predizer(entradas, nome_csv)  # aqui entrariam os caracteres sujos
     resultado_precisao = precisao(resultados, np.array(labels_teste))
+    matriz_confusao(resultados, labels_teste)  # Caso queira o log da matriz de confusão no resultado.txt
