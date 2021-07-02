@@ -1,0 +1,99 @@
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   3   3   3   3   3   3   3
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   0   0   0   0   0   0
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   2
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   2
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   2
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   2
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   1
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   1
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   2
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   1   1   1   1   1   2   1
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   1
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   2   2   1   1   1   1   1
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0
+Matriz de Confusão: 
+   Ap  Bp  Cp  Dp  Ep  Fp  Gp
+A   3   3   3   3   3   3   3
+B   0   0   0   0   0   0   0
+C   0   0   0   0   0   0   0
+D   0   0   0   0   0   0   0
+E   0   0   0   0   0   0   0
+F   0   0   0   0   0   0   0
+G   0   0   0   0   0   0   0

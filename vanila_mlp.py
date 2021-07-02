@@ -4,30 +4,34 @@ import pandas as pd
 
 class MLP:
     def __init__(self, entrada=63, escondida=[1], saida=7):
+
         logger(f'Neuronios de entrada: {entrada}, camadas escondidas: {escondida}, neuronios de saida: {saida}, ',
                'parametros_iniciais.txt')
+
         self.entradas = entrada
         self.escondida = escondida
         self.saida = saida
 
-        camadas = [self.entradas] + self.escondida + [self.saida]
+        self.camadas = [self.entradas] + self.escondida + [self.saida]
 
         pesos = []
-        for i in range(len(camadas) - 1):
-            w = np.random.rand(camadas[i], camadas[i + 1])  # Gerando a matriz de pesos
+        for i in range(len(self.camadas) - 1):
+            w = np.random.rand(self.camadas[i], self.camadas[i + 1])  # Gerando a matriz de pesos
             pesos.append(w)
         self.pesos = pesos
+
+        # TODO: Ta feiao, preciso arrumar
         logger(f'Pesos inciais:\n {pesos}', 'pesos_iniciais.txt')
 
         ativacoes = []
-        for i in range(len(camadas)):
-            temp = np.zeros(camadas[i])  # Return a list of 0 (0, 0, 0, 0)
+        for i in range(len(self.camadas)):
+            temp = np.zeros(self.camadas[i])  # Return a list of 0 (0, 0, 0, 0)
             ativacoes.append(temp)
         self.ativacoes = ativacoes
 
         derivadas = []
-        for i in range(len(camadas) - 1):
-            aux = np.zeros((camadas[i], camadas[i + 1]))
+        for i in range(len(self.camadas) - 1):
+            aux = np.zeros((self.camadas[i], self.camadas[i + 1]))
             derivadas.append(aux)
         self.derivadas = derivadas
 
@@ -38,15 +42,12 @@ class MLP:
         return t * (1.0 - t)
 
     def feed_foward(self, entradas):
-        ativacao = entradas
-        self.ativacoes[0] = entradas
+        outputs = []
+        for i in self.camadas:
+            output = self.sigmoide(entradas)
+            outputs.append(output)
 
-        for i, w in enumerate(self.pesos):
-            temp = np.dot(ativacao, w)
-            ativacao = self.sigmoide(temp)
-            self.ativacoes[i + 1] = ativacao
-
-        return ativacao
+        return outputs
 
     def back_propagation(self, erro, v=False):
         for i in reversed(range(len(self.derivadas))):
@@ -72,19 +73,23 @@ class MLP:
             derivadas = self.derivadas[i]
 
             pesos += derivadas * taxa_erro
-            logger(f'Atualizando w{i} {pesos}\n', "pesos_grad_desc.txt")
+
+            # logger(f'Atualizando w{i} {pesos}\n', "pesos_grad_desc.txt")
             # print(f'Atualizado w{i} {pesos}')
 
     def eqm(self, target, saida):
         return np.average((target - saida) ** 2)
 
-    def treinamento(self, entradas, targets, epocas, taxa_erro):
+    def treinamento(self, entradas, targets, epocas, taxa_erro, parada_antecipada=False):
         saida = None
         for epoca in range(epocas):
-            print(epoca)
+            # print(epoca)
             somatorio_erros = 0
+            somatorio_erros_aux = 0
             for entrada, target in zip(entradas, targets):
-                saida = self.feed_foward(entrada / np.linalg.norm(entrada))
+                somatorio_erros_aux = somatorio_erros
+
+                saida = self.feed_foward(entrada)
 
                 erro = target - saida
 
@@ -93,7 +98,12 @@ class MLP:
                 self.gradiente_descendente(taxa_erro)
 
                 somatorio_erros += self.eqm(target, saida)
-            logger(f'Erro {somatorio_erros / len(entradas)} na epoca {epoca} \n', "erro_epoca.txt")
+                print(epoca)
+                if somatorio_erros/len(entradas) - somatorio_erros_aux/len(entradas) < 0.00001 and somatorio_erros > 0:
+                    break
+
+            logger(f'Erro {somatorio_erros/len(entradas)} na epoca {epoca} \n', "erro_epoca.txt")
+
         logger(f'Pesos finais:\n {self.pesos} \n', 'pesos_finais.txt')
 
     def predizer(self, x_teste, base):
@@ -102,6 +112,9 @@ class MLP:
         logger_predicao(resultado, base)  # logando certinho os resultados
 
         return resultado
+
+
+""" ----- Funções auxiliares -----"""
 
 
 def precisao(resultado, y_teste):
@@ -118,57 +131,80 @@ def precisao(resultado, y_teste):
     return accuracy
 
 
-def matriz_confusao(preditos, target):
-    # valores preditos corretamente
-    tp = 0
-    tn = 0
+def matriz_confusao_multiclasse(preditos, targets):
+    matriz = [[0 for i in range(7)] for j in range(7)]
+    resultado = []
+    for i in range(len(preditos)):
+        resultado.append(contabilizar(preditos[i]))
 
-    # valores preditos incorretamente
-    fp = 0
-    fn = 0
-
-    linha = 0
-
-    while (linha < len(preditos)):  # incrementando a cada linha
-
-        coluna = 0
-
-        while (coluna < len(preditos[linha])):  # incrementando a cada coluna
-            v_predito = preditos[linha][coluna]  # valor predito em cada neuronio de saida
-            v_target = target[linha][coluna]  # valor com target para cada neuronio (0 ou 1)
-
-            if v_predito == max(preditos[linha]):  # se o valor predito foi o maior (ou seja, a classificacao final)
-                if v_target == 1:
-                    tp += 1  # true positive recebe +1 caso o target também seja 1
-                else:
-                    fp += 1  # se target é 0, é false positive
-            else:
-                if v_target == 0:
-                    tn += 1  # true negative recebe +1 caso o target também seja 0
-                else:
-                    fn += 1  # se target é 1, é false negative
-            coluna += 1
-
-        matriz_conf = np.array([
-            [tp, fp],  # valores da classe positiva
-            [fn, tn]  # valores da classe negativa
-        ])
-
-        logger(f'Matriz de Confusão: \n{matriz_conf}\n', 'resultado.txt')
-        logger(f'Target: {target[linha]}\n Resposta da MLP: {preditos[linha]}', 'resultado.txt')
-        logger(f'\n------------------------------\n', 'resultado.txt')
-
-        # zera valores para criar uma matriz a cada linha
-
-        tp = 0
-        tn = 0
-        fp = 0
-        fn = 0
-
-        linha += 1
+    for i in range(len(targets)):
+        d = resultado[i].index(1)
+        j = targets[i].index(1)
+        if d == j:
+            matriz[j][j] += 1
+        else:
+            matriz[d][j] += 1
+    matriz_final = pd.DataFrame(matriz, index=['A', 'B', 'C', 'D', 'E', 'F', 'G'], columns=['Ap', 'Bp', 'Cp', 'Dp', 'Ep', 'Fp', 'Gp'])
+    matriz_conf = np.array(matriz)
+    logger(f'Matriz de Confusão: \n{matriz_final}\n', 'resultado.txt')
+    return matriz_conf # retorna como arranjos
 
 
-def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
+def contabilizar(resultados): # traz resultados em termos de caracter para cada resultado da mlp
+    caracteres = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    previsoes = [0, 0, 0, 0, 0, 0, 0]
+    for i in range(len(resultados)):
+        if resultados[i] == max(resultados):
+            previsoes[i] += 1
+    return previsoes
+
+
+def precisao_matriz_confusao(rotulos, matriz_conf):
+    coluna = matriz_conf[:, rotulos] # corta verticalmente e pega valores da coluna rotulos
+    return matriz_conf[rotulos, rotulos]/coluna.sum()
+
+
+def recall_matriz_conf(rotulos, matriz_conf):
+    linha = matriz_conf[rotulos, :] # corta horizontalmente e pega valores da linha rotulos
+    return matriz_conf[rotulos, rotulos]/linha.sum()
+
+
+def precisao_media(matriz):
+    linhas, colunas = matriz.shape
+    soma_precisao = 0
+    for rotulo in range(linhas):
+        soma_precisao += precisao_matriz_confusao(rotulo, matriz)
+    return soma_precisao/linhas
+
+
+def recall_medio(matriz):
+    linhas, colunas = matriz.shape
+    soma_recalls = 0
+    for rotulo in range(linhas):
+        soma_recalls += recall_matriz_conf(rotulo, matriz)
+    return soma_recalls / linhas
+
+
+def acuracia(matriz):
+    soma_diagonal = matriz.trace() # soma os valores diagonais da matriz
+    soma_total_elementos = matriz.sum() # soma quantidade total de predicoes
+    return soma_diagonal/soma_total_elementos
+
+
+def estatisticas_matriz_confusao(matriz):
+    aux = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    print("Rotulo    Precisao  Revocação")
+    for i in range(7):
+        print(f"{aux[i]}     {precisao_matriz_confusao(i, matriz):9.2f}     {recall_matriz_conf(i, matriz):6.3f}")
+
+    print("Precisão total:", precisao_media(matriz))
+
+    print("Recall total:", recall_medio(matriz))
+
+    print("Acuracia total:", acuracia(matriz))
+
+
+def separa_colunas(entrada: pd.DataFrame, linhas, col):
     target = []
     saida = []
     tgt = None
@@ -176,7 +212,7 @@ def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
     for i in range(linhas):
         aux1 = []
         aux2 = []
-        for j in range(colunas):
+        for j in range(col):
             if j < 63:
                 aux1.append(entrada[j][i])  # monta aux 1 da lista da letra
             else:
@@ -189,14 +225,6 @@ def separa_colunas(entrada: pd.DataFrame, linhas, colunas):
         target.append(tgt)
 
     return saida, target
-
-
-"""
-Arquivos possíveis: 
-    pesos_iniciais.txt
-    pesos_finais.txt
-    erro_epoca.txt
-"""
 
 
 def logger(mensagem, arquivo):
@@ -217,27 +245,37 @@ def logger_predicao(resultado, base):
 if __name__ == '__main__':
     """------ TREINAMENTO ------"""
     data_input = pd.read_csv('caracteres-limpo.csv', header=None, usecols=[i for i in range(70)])
-    linhas_treinamento = 21  # 21 caracteres-limpo originalmente tinha 21 linhas, cortei algumas fora pra fazer o csv de predicao
+    linhas_treinamento = 1  # 21 caracteres-limpo originalmente tinha 21 linhas, cortei algumas fora pra fazer o csv de predicao
     colunas = 70
     X, labels = separa_colunas(data_input, linhas_treinamento, colunas)  # x numero de linhas  y num colunas
     entradas = np.array(X)
+    # print(entradas)
     targets = np.array(labels)
 
     mlp = MLP()
 
-    epocas = 1000
-    alfa = 0.35
+    epocas = 80000
+    alfa = 0.6452  # varia de 0.1 à 1
     logger(f'Épocas: {epocas}, taxa de aprendizado: {alfa} ', 'parametros_iniciais.txt')
     mlp.treinamento(entradas, targets, epocas, alfa)
+
+    nome_csv = 'caracteres-ruido.csv'
+    data_input = pd.read_csv(nome_csv, header=None, usecols=[i for i in range(70)])
+    X, labels = separa_colunas(data_input, linhas_treinamento, colunas)  # x numero de linhas  y num colunas
+    entradas = np.array(X)
+    targets = np.array(labels)
+    # mlp.treinamento(entradas, targets, epocas, alfa)
 
     """------ EXECUCAO ------"""
 
     nome_csv = 'caracteres-ruido.csv'
     entrada_execucao = pd.read_csv(nome_csv, header=None, usecols=[i for i in range(70)])
-    linhas_execucao = 21
+    linhas_execucao = 1
     X_teste, labels_teste = separa_colunas(entrada_execucao, linhas_execucao, colunas)
     entradas = np.array(X_teste)
 
     resultados = mlp.predizer(entradas, nome_csv)  # aqui entrariam os caracteres sujos
     resultado_precisao = precisao(resultados, np.array(labels_teste))
-    matriz_confusao(resultados, labels_teste)  # Caso queira o log da matriz de confusão no resultado.txt
+    # matriz_confusao(resultados, labels_teste)  # Caso queira o log da matriz de confusão no resultado.txt
+    matriz = matriz_confusao_multiclasse(resultados, labels_teste)
+    estatisticas_matriz_confusao(matriz)
